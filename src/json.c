@@ -65,6 +65,12 @@ void _tokenize_json(List *list, const char *json_str) {
 				nil_val,
 				line)));
 			break;
+		case ':':
+			append_list(list, from_ptr(_create_token(kCOLON,
+				_substring(json_str, start, current),
+				nil_val,
+				line)));
+			break;
 		case ',':
 			append_list(list, from_ptr(_create_token(kCOMMA,
 				_substring(json_str, start, current),

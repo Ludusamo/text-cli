@@ -12,6 +12,7 @@ typedef struct {
 	code(RBRACK) \
 	code(LCURLY) \
 	code(RCURLY) \
+	code(COLON) \
 	code(COMMA) \
 	code(STRING) \
 	code(NUMBER) \
