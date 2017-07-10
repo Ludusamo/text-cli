@@ -10,6 +10,8 @@ typedef union {
 } Value;
 
 static const Value nil_val = { .bits = 0xFFF00000ULL << 32 };
+static const Value true_val = { .bits = 0xFFF00001ULL << 32 };
+static const Value false_val = { .bits = 0xFFF00002ULL << 32 };
 static const uint64_t max_double = 0xFFF8ULL << 48;
 static const uint64_t ptr_mask = 0xFFF9ULL << 48;
 static const uint64_t int_mask = 0xFFFAULL << 48;

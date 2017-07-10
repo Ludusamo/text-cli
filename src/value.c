@@ -20,7 +20,6 @@ int is_int32(Value v) {
 Value from_double(double d) {
 	Value v;
 	if (d == (int32_t) d && !is_neg_zero(d)) {
-		printf("%lf\n", d);
 		v.bits = (uint64_t) (int32_t) d | int_mask;
 		return v;
 	}

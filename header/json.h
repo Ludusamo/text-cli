@@ -34,10 +34,15 @@ typedef struct {
 	int line;
 } Token;
 
+const char *type_str(Token_Type t);
 Token *_create_token(Token_Type type, const char *lexeme, Value val, int line);
 char *_substring(const char *src, int begin, int end);
 void print_token(Token *t);
 void _tokenize_json(List *list, const char *json_str);
-void parse_json(Json *json, const char *json_str);
+static Value _parse_val(List *tokens, int *cur);
+static Keyval *_parse_pair(List *tokens, int *cur);
+static List *_parse_list(List *tokens, int *cur);
+static Json *_parse_obj(List *tokens, int *cur);
+Json *parse_json(const char *json_str);
 
 #endif // JSON_H
