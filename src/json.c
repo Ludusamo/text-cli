@@ -241,4 +241,29 @@ Json *parse_json(const char *json_str) {
 	return _parse_obj(&tokens, &cur);
 }
 
+char *_stringify_val(const Value v) {
+
+}
+
+char *_stringify_pair(const Keyval *pair) {
+
+}
+
+char *_stringify_list(const List *l) {
+
+}
+
+char *_stringify_obj(const Json *json) {
+	char *jstr = "{";
+	Iter i;
+	iter_hashtable(&i);
+	foreach(i) {
+		
+	}
+	strcat(jstr, "}");
+	return jstr;
+}
+
+char *json_stringify(const Json *json) {
+	return *_stringify_obj(json);
 }

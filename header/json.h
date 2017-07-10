@@ -45,4 +45,10 @@ static List *_parse_list(List *tokens, int *cur);
 static Json *_parse_obj(List *tokens, int *cur);
 Json *parse_json(const char *json_str);
 
+char *_stringify_val(const Value v);
+char *_stringify_pair(const Keyval *pair);
+char *_stringify_list(const List *l);
+char *_stringify_obj(const Json *json);
+char *json_stringify(const Json *json);
+
 #endif // JSON_H
