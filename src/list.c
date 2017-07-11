@@ -112,9 +112,9 @@ Value val_iter_list(const Iter *self) {
 	return access_list((List *) self->data[0], *(int*) self->data[1]);
 }
 
-int iter_list(Iter *iter, List *list) {
+int iter_list(Iter *iter, const List *list) {
 	iter->data = calloc(sizeof(void*), 3);
-	iter->data[0] = list;
+	iter->data[0] = (List *) list;
 	iter->data[1] = malloc(sizeof(int));
 	iter->data[2] = malloc(sizeof(int));
 	*(int*)iter->data[1] = 0;

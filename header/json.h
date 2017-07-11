@@ -3,6 +3,12 @@
 
 #include "hashtable.h"
 #include "list.h"
+
+typedef enum {
+	LIST,
+	OBJ
+} Json_Type;
+
 typedef struct {
 	Hashtable h;
 } Json;
@@ -39,10 +45,10 @@ Token *_create_token(Token_Type type, const char *lexeme, Value val, int line);
 char *_substring(const char *src, int begin, int end);
 void print_token(Token *t);
 void _tokenize_json(List *list, const char *json_str);
-static Value _parse_val(List *tokens, int *cur);
-static Keyval *_parse_pair(List *tokens, int *cur);
-static List *_parse_list(List *tokens, int *cur);
-static Json *_parse_obj(List *tokens, int *cur);
+Value _parse_val(List *tokens, int *cur);
+Keyval *_parse_pair(List *tokens, int *cur);
+List *_parse_list(List *tokens, int *cur);
+Json *_parse_obj(List *tokens, int *cur);
 Json *parse_json(const char *json_str);
 
 char *_stringify_val(const Value v);

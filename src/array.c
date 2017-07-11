@@ -58,9 +58,9 @@ Value val_iter_array(const Iter *self) {
 	return access_array((Array*) self->data[0], *((int*) self->data[1]));
 }
 
-int iter_array(Iter *iter, Array *array) {
+int iter_array(Iter *iter, const Array *array) {
 	iter->data = calloc(sizeof(Value), 3);
-	iter->data[0] = array;
+	iter->data[0] = (Array *) array;
 	iter->data[1] = malloc(sizeof(int));
 	iter->data[2] = malloc(sizeof(int));
 	*((int*)(iter->data[1])) = 0;

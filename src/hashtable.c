@@ -156,7 +156,7 @@ Value val_iter_hashtable(const Iter *self) {
 	return access_list(self->data[0], *(int*) self->data[1]);
 }
 
-int iter_hashtable(Iter *self, Hashtable *h) {
+int iter_hashtable(Iter *self, const Hashtable *h) {
 	self->data = calloc(sizeof(void*), 3);
 	self->data[0] = malloc(sizeof(List));
 	ctor_list(self->data[0]);

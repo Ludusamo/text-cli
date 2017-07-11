@@ -21,7 +21,7 @@ Array *add_array(Array *arr1, Array *arr2);
 void next_iter_array(Iter *self);
 int done_iter_array(const Iter *self);
 Value val_iter_array(const Iter *self);
-int iter_array(Iter *iter, Array *array);
+int iter_array(Iter *iter, const Array *array);
 void destroy_iter_array(Iter *iter);
 
 #endif // ARRAY_H

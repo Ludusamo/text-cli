@@ -28,8 +28,8 @@ char *_substring(const char *src, int begin, int end) {
 }
 
 void print_token(Token *t) {
-	printf("Token_Type: %d, Lexeme: %s, Line: %d, Value: ",
-	       t->type,
+	printf("Token_Type: %s, Lexeme: %s, Line: %d, Value: ",
+	       type_str(t->type),
 	       t->lexeme,
 	       t->line);
 	if (is_double(t->val)) {
@@ -166,21 +166,26 @@ static int _expect(List *tokens, int i, Token_Type type) {
 	return 0;
 }
 
-static Value _parse_val(List *tokens, int *cur) {
+Value _parse_val(List *tokens, int *cur) {
 	Token *tok = get_ptr(access_list(tokens, (*cur)));
 	switch(tok->type) {
-	case kLCURLY:
-		return from_ptr(_parse_obj(tokens, cur));
-	case kLBRACK:
-		return from_ptr(_parse_list(tokens, cur));
-		break;
+	case kLCURLY: {
+		Obj *obj = malloc(sizeof(Obj));
+		*obj = (Obj) { OBJ, _parse_obj(tokens, cur) };
+		return from_obj(obj);
+	}
+	case kLBRACK: {
+		Obj *obj = malloc(sizeof(Obj));
+		*obj = (Obj) { LIST, _parse_list(tokens, cur) };
+		return from_obj(obj);
+	}
 	case kSTRING:
 	case kNUMBER:
 	case kNULL:
 	case kTRUE:
 	case kFALSE:
 		(*cur)++;
-		return ((Token *) get_ptr(access_list(tokens, *cur)))->val;
+		return tok->val;
 	default: {
 		Token *t = ((Token*) get_ptr(access_list(tokens, *cur)));
 		throw_error("Not a valid value.", t->line);
@@ -189,7 +194,7 @@ static Value _parse_val(List *tokens, int *cur) {
 	return nil_val;
 }
 
-static Keyval *_parse_pair(List *tokens, int *cur) {
+Keyval *_parse_pair(List *tokens, int *cur) {
 	Keyval *pair = malloc(sizeof(Keyval));
 	if (_expect(tokens, (*cur)++, kSTRING)) {
 		pair->key = get_ptr(
@@ -201,7 +206,7 @@ static Keyval *_parse_pair(List *tokens, int *cur) {
 	return pair;
 }
 
-static List *_parse_list(List *tokens, int *cur) {
+List *_parse_list(List *tokens, int *cur) {
 	List *l = malloc(sizeof(List));
 	ctor_list(l);
 	if (_expect(tokens, (*cur)++, kLBRACK)) {
@@ -216,7 +221,7 @@ static List *_parse_list(List *tokens, int *cur) {
 	return l;
 }
 
-static Json *_parse_obj(List *tokens, int *cur) {
+Json *_parse_obj(List *tokens, int *cur) {
 	Json *obj = malloc(sizeof(Json));
 	ctor_hashtable(&obj->h);
 	if (_expect(tokens, (*cur)++, kLCURLY)) {
@@ -241,29 +246,77 @@ Json *parse_json(const char *json_str) {
 	return _parse_obj(&tokens, &cur);
 }
 
-char *_stringify_val(const Value v) {
+static char *str_concat(char *dest, const char *src) {
+	char *new = malloc(strlen(dest) + strlen(src) + 1);
+	new[0] = '\0';
+	strcpy(new, dest);
+	strcat(new, src);
+	free(dest);
+	return new;
+}
 
+char *_stringify_val(const Value v) {
+	if (is_obj(v)) {
+		Obj *o = get_obj(v);
+		if (o->type == LIST) return _stringify_list(o->ptr);
+		if (o->type == OBJ) return _stringify_obj(o->ptr);
+	} else if (is_int32(v)) {
+		char *str = malloc(255);
+		sprintf(str, "%d", v.as_int32);
+		return str;
+	} else if (nil_val.bits == v.bits) {
+		return "null";
+	} else if (true_val.bits == v.bits) {
+		return "true";
+	} else if (false_val.bits == v.bits) {
+		return "false";
+	} else if (is_ptr(v)) {
+		char *str = malloc(strlen(get_ptr(v)) + 2);
+		sprintf(str, "\"%s\"", get_ptr(v));
+		return str;
+	}
+	char *str = malloc(255);
+	sprintf(str, "%f", v.as_double);
+	return str;
 }
 
 char *_stringify_pair(const Keyval *pair) {
-
+	char *str = malloc(sizeof(1));
+	str[0] = '\0';
+	str = str_concat(str, pair->key);
+	str = str_concat(str, ":");
+	str = str_concat(str, _stringify_val(pair->val));
+	return str;
 }
 
 char *_stringify_list(const List *l) {
-
+	char *jstr = malloc(sizeof(2));
+	strcpy(jstr, "[");
+	Iter i;
+	iter_list(&i, l);
+	while (i.done(&i)) {
+		jstr = str_concat(jstr, _stringify_val(i.val(&i)));
+		i.next(&i);
+		if (i.done(&i)) strcat(jstr, ",");
+	}
+	jstr = str_concat(jstr, "]");
+	return jstr;
 }
 
 char *_stringify_obj(const Json *json) {
-	char *jstr = "{";
+	char *jstr = malloc(sizeof(2));
+	strcpy(jstr, "{");
 	Iter i;
-	iter_hashtable(&i);
-	foreach(i) {
-		
+	iter_hashtable(&i, &json->h);
+	while (i.done(&i)) {
+		jstr = str_concat(jstr, _stringify_pair(get_ptr(i.val(&i))));
+		i.next(&i);
+		if (i.done(&i)) strcat(jstr, ",");
 	}
-	strcat(jstr, "}");
+	jstr = str_concat(jstr, "}");
 	return jstr;
 }
 
 char *json_stringify(const Json *json) {
-	return *_stringify_obj(json);
+	return _stringify_obj(json);
 }

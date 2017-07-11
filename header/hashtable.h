@@ -35,7 +35,7 @@ void next_iter_hashtable(Iter *self);
 int done_iter_hashtable(const Iter *self);
 Value val_iter_hashtable(const Iter *self);
 
-int iter_hashtable(Iter *self, Hashtable *h);
+int iter_hashtable(Iter *self, const Hashtable *h);
 void destroy_iter_hashtable(Iter *self);
 
 #endif // HASHTABLE_H

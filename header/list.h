@@ -28,7 +28,7 @@ void next_iter_list(Iter *self);
 int done_iter_list(const Iter *self);
 Value val_iter_list(const Iter *self);
 
-int iter_list(Iter *self, List *list);
+int iter_list(Iter *self, const List *list);
 void destroy_iter_list(Iter *self);
 
 #endif // LIST_H
