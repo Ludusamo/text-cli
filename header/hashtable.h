@@ -7,7 +7,7 @@
 
 typedef struct {
 	const char *key;
-	void *val;
+	Value val;
 } Keyval;
 
 typedef struct {
@@ -19,8 +19,8 @@ typedef struct {
 int ctor_hashtable(Hashtable *h);
 int dtor_hashtable(Hashtable *h);
 
-int set_hashtable(Hashtable *h, const char *key, void *val);
-void *access_hashtable(const Hashtable *h, const char *key);
+int set_hashtable(Hashtable *h, const char *key, Value val);
+Value access_hashtable(const Hashtable *h, const char *key);
 int delete_hashtable(Hashtable *h, const char *key);
 int clear_hashtable(Hashtable *h);
 
@@ -33,9 +33,9 @@ uint64_t hash2(const char *str);
 
 void next_iter_hashtable(Iter *self);
 int done_iter_hashtable(const Iter *self);
-void *val_iter_hashtable(const Iter *self);
+Value val_iter_hashtable(const Iter *self);
 
-int iter_hashtable(Iter *self, Hashtable *h);
+int iter_hashtable(Iter *self, const Hashtable *h);
 void destroy_iter_hashtable(Iter *self);
 
 #endif // HASHTABLE_H

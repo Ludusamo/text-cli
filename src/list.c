@@ -14,7 +14,7 @@ int dtor_list(List *list) {
 	return 1;
 }
 
-int insert_list(List *list, int index, void *val) {
+int insert_list(List *list, int index, Value val) {
 	if (index > list->length || index < 0) return 0;
 	if (list->array.length < list->length + 1)
 		_grow_list(list);
@@ -26,7 +26,7 @@ int insert_list(List *list, int index, void *val) {
 	return 1;
 }
 
-int append_list(List *list, void *val) {
+int append_list(List *list, Value val) {
 	if (list->array.length <= list->length) {
 		_grow_list(list);
 	}
@@ -34,9 +34,9 @@ int append_list(List *list, void *val) {
 	return 1;
 }
 
-void *pop_list(List *list) {
-	if (!list || list->length == 0) return 0;
-	void *val = access_list(list, list->length - 1);
+Value pop_list(List *list) {
+	if (!list || list->length == 0) return nil_val;
+	Value val = access_list(list, list->length - 1);
 	list->length--;
 	return val;
 }
@@ -57,12 +57,12 @@ int clear_list(List *list) {
 	return 1;
 }
 
-int set_list(List *list, int index, void *val) {
+int set_list(List *list, int index, Value val) {
 	return set_array(&list->array, index, val);
 }
 
-void *access_list(const List *list, int index) {
-	if (!list || index >= list->length) return 0;
+Value access_list(const List *list, int index) {
+	if (!list || index >= list->length) return nil_val;
 	return access_array(&list->array, index);
 }
 
@@ -78,7 +78,7 @@ List *add_list(List *lhs, List *rhs) {
 	return new_list;
 }
 
-int resize_list(List *list, size_t len, void *value) {
+int resize_list(List *list, size_t len, Value value) {
 	while (list->array.length < len) _grow_list(list);
 	while (list->length < len) append_list(list, value);
 	list->length = len;
@@ -108,13 +108,13 @@ int done_iter_list(const Iter *self) {
 	return *(int*) self->data[1] < *(int*) self->data[2];
 }
 
-void *val_iter_list(const Iter *self) {
+Value val_iter_list(const Iter *self) {
 	return access_list((List *) self->data[0], *(int*) self->data[1]);
 }
 
-int iter_list(Iter *iter, List *list) {
+int iter_list(Iter *iter, const List *list) {
 	iter->data = calloc(sizeof(void*), 3);
-	iter->data[0] = list;
+	iter->data[0] = (List *) list;
 	iter->data[1] = malloc(sizeof(int));
 	iter->data[2] = malloc(sizeof(int));
 	*(int*)iter->data[1] = 0;

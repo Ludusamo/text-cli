@@ -13,7 +13,7 @@ int dtor_hashtable(Hashtable *h) {
 	return 1;
 }
 
-int set_hashtable(Hashtable *h, const char *key, void *val) {
+int set_hashtable(Hashtable *h, const char *key, Value val) {
 	int cur = 1;
 	Keyval *pair = malloc(sizeof(Keyval));
 	pair->key = key;
@@ -45,7 +45,7 @@ int set_hashtable(Hashtable *h, const char *key, void *val) {
 
 Keyval *_aux_set_hashtable(Hashtable *h, Keyval *new_pair,
                            List *list, uint64_t hash) {
-	Keyval *pair = access_list(list, hash);
+	Keyval *pair = get_ptr(access_list(list, hash));
 	if (pair) {
 		if (pair->key == new_pair->key) {
 			h->size--;
@@ -54,37 +54,37 @@ Keyval *_aux_set_hashtable(Hashtable *h, Keyval *new_pair,
 			return 0;
 		}
 	}
-	set_list(list, hash, new_pair);
+	set_list(list, hash, from_ptr(new_pair));
 	return pair;
 }
 
-void *access_hashtable(const Hashtable *h, const char *key) {
+Value access_hashtable(const Hashtable *h, const char *key) {
 	uint64_t h1 = hash1(key) % h->a.length;
-	Keyval *pair = access_list(&h->a, h1);
+	Keyval *pair = get_ptr(access_list(&h->a, h1));
 	if (pair && pair->key == key) return pair->val;
 	uint64_t h2 = hash2(key) % h->b.length;
-	pair = access_list(&h->b, h2);
+	pair = get_ptr(access_list(&h->b, h2));
 	if (pair && pair->key == key) return pair->val;
-	return 0;
+	return nil_val;
 }
 
 int _rehash(Hashtable *h) {
 	List keyvals;
 	ctor_list(&keyvals);
 	for (size_t i = 0; i < h->capacity / 2; i++) {
-		Keyval *a = access_list(&h->a, i);
-		if (a) append_list(&keyvals, a);
-		Keyval *b = access_list(&h->b, i);
-		if (b) append_list(&keyvals, b);
+		Keyval *a = get_ptr(access_list(&h->a, i));
+		if (a) append_list(&keyvals, from_ptr(a));
+		Keyval *b = get_ptr(access_list(&h->b, i));
+		if (b) append_list(&keyvals, from_ptr(b));
 	}
 	if (h->capacity < 1) h->capacity = 1;
 	clear_list(&h->a);
 	clear_list(&h->b);
-	resize_list(&h->a, h->capacity, 0);
-	resize_list(&h->b, h->capacity, 0);
+	resize_list(&h->a, h->capacity, nil_val);
+	resize_list(&h->b, h->capacity, nil_val);
 	h->size = 0;
 	for (size_t i = 0; i < keyvals.length; i++) {
-		Keyval *keyval = access_list(&keyvals, i);
+		Keyval *keyval = get_ptr(access_list(&keyvals, i));
 		set_hashtable(h, keyval->key, keyval->val);
 		free(keyval);
 	}
@@ -96,16 +96,16 @@ int _rehash(Hashtable *h) {
 int delete_hashtable(Hashtable *h, const char *key) {
 	h->size--;
 	uint64_t h1 = hash1(key) % h->a.length;
-	Keyval *pair = access_list(&h->a, h1);
+	Keyval *pair = get_ptr(access_list(&h->a, h1));
 	if (pair->key == key) {
-		set_list(&h->a, h1, 0);
+		set_list(&h->a, h1, nil_val);
 		free(pair);
 		return 1;
 	}
 	uint64_t h2 = hash2(key) % h->b.length;
-	pair = access_list(&h->b, h2);
+	pair = get_ptr(access_list(&h->b, h2));
 	if (pair->key == key) {
-		set_list(&h->b, h2, 0);
+		set_list(&h->b, h2, nil_val);
 		free(pair);
 		return 1;
 	}
@@ -114,9 +114,9 @@ int delete_hashtable(Hashtable *h, const char *key) {
 
 int clear_hashtable(Hashtable *h) {
 	for (size_t i = 0; i < h->capacity / 2; i++) {
-		Keyval *a = access_list(&h->a, i);
+		Keyval *a = get_ptr(access_list(&h->a, i));
 		if (a) free(a);
-		Keyval *b = access_list(&h->b, i);
+		Keyval *b = get_ptr(access_list(&h->b, i));
 		if (b) free(b);
 	}
 	clear_list(&h->a);
@@ -152,11 +152,11 @@ int done_iter_hashtable(const Iter *self) {
 	return *(int*)self->data[1] < *(int*)self->data[2];
 }
 
-void *val_iter_hashtable(const Iter *self) {
+Value val_iter_hashtable(const Iter *self) {
 	return access_list(self->data[0], *(int*) self->data[1]);
 }
 
-int iter_hashtable(Iter *self, Hashtable *h) {
+int iter_hashtable(Iter *self, const Hashtable *h) {
 	self->data = calloc(sizeof(void*), 3);
 	self->data[0] = malloc(sizeof(List));
 	ctor_list(self->data[0]);
@@ -165,10 +165,10 @@ int iter_hashtable(Iter *self, Hashtable *h) {
 	iter_list(&iter1, &h->a);
 	iter_list(&iter2, &h->b);
 	for (size_t i = 0; i < h->a.length; i++) {
-		if (iter1.val(&iter1)) {
+		if (iter1.val(&iter1).bits != nil_val.bits) {
 			append_list(self->data[0], iter1.val(&iter1));
 		}
-		if (iter2.val(&iter2)) {
+		if (iter2.val(&iter2).bits != nil_val.bits) {
 			append_list(self->data[0], iter2.val(&iter2));
 		}
 		iter1.next(&iter1);

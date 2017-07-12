@@ -2,6 +2,7 @@
 #include <curl/curl.h>
 #include <string.h>
 #include <stdlib.h>
+#include "json.h"
 
 size_t aggregate_data_to_string(char *ptr, size_t size, size_t nmemb, char **s) {
 	size_t old_len = *s ? strlen(*s) : 0;
@@ -41,5 +42,14 @@ int main() {
 	printf("%s\n", s);
 	free(s);
 	curl_global_cleanup();
+
+	printf("Text CLI\n");
+	List l;
+	ctor_list(&l);
+	Json *json = parse_json("{\"test\": [\"hello\", 57], \"test2\": {\"a\":3.0}}");
+	char *jstr = json_stringify(json);
+	printf("%s\n", jstr);
+	free(jstr);
+	destroy_json(json);
 	return 0;
 }
