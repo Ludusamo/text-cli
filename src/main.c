@@ -13,9 +13,7 @@ size_t aggregate_data_to_string(char *ptr, size_t size, size_t nmemb, char **s) 
 	return size * nmemb;
 }
 
-const char *get_texts() {
-	curl_global_init(CURL_GLOBAL_DEFAULT);
-
+char *get_texts() {
 	CURL *curl;
 	CURLcode res;
 	curl = curl_easy_init();
@@ -32,13 +30,16 @@ const char *get_texts() {
 			fprintf(stderr, "curl_easy_perform() failed: %s\n",
 			        curl_easy_strerror(res));
 		curl_easy_cleanup(curl);
+		curl = 0;
 	}
-
-	curl_global_cleanup();
 	return s;
 }
 
 int main() {
-	printf("%s\n", get_texts());
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+	char *s = get_texts();
+	printf("%s\n", s);
+	free(s);
+	curl_global_cleanup();
 	return 0;
 }
