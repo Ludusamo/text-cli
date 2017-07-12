@@ -39,14 +39,14 @@ char *get_texts() {
 int main() {
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 	char *s = get_texts();
-	printf("%s\n", s);
+	//printf("%s\n", s);
 	free(s);
 	curl_global_cleanup();
 
 	printf("Text CLI\n");
 	List l;
 	ctor_list(&l);
-	Json *json = parse_json("{\"test\": [\"hello\", 57], \"test2\": {\"a\":3.0}}");
+	Json *json = parse_json("{\"test\": [\"hello\", 57], \"test2\": {\"a\":3.1}}");
 	char *jstr = json_stringify(json);
 	printf("%s\n", jstr);
 	free(jstr);

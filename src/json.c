@@ -27,8 +27,9 @@ void _destroy_token(Token *token) {
 }
 
 char *_substring(const char *src, int begin, int end) {
-	char *sub = malloc(sizeof(char) * end - begin);
+	char *sub = malloc(sizeof(char) * (end - begin) + 1);
 	strncpy(sub, src + begin, end - begin);
+	sub[(end - begin)] = '\0';
 	return sub;
 }
 
