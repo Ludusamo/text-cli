@@ -21,6 +21,11 @@ Token *_create_token(Token_Type type, const char *lexeme, Value val, int line) {
 	return t;
 }
 
+void _destroy_token(Token *token) {
+	free((void*) token->lexeme);
+	free(token);
+}
+
 char *_substring(const char *src, int begin, int end) {
 	char *sub = malloc(sizeof(char) * end - begin);
 	strncpy(sub, src + begin, end - begin);
@@ -243,7 +248,58 @@ Json *parse_json(const char *json_str) {
 	ctor_list(&tokens);
 	_tokenize_json(&tokens, json_str);
 	int cur = 0;
-	return _parse_obj(&tokens, &cur);
+	Json *ret = _parse_obj(&tokens, &cur);
+	Iter i;
+	iter_list(&i, &tokens);
+	foreach (i) {
+		_destroy_token(get_ptr(i.val(&i)));
+	}
+	destroy_iter_list(&i);
+	dtor_list(&tokens);
+	return ret;
+}
+
+void _destroy_val(Value val) {
+	if (is_obj(val)) {
+		Obj *o = get_obj(val);
+		if (o->type == LIST) _destroy_list(o->ptr);
+		else if (o->type == OBJ) _destroy_obj(o->ptr);
+		free(o);
+	} else if (is_ptr(val)) {
+		free(get_ptr(val));
+	}
+}
+
+void _destroy_pair(Keyval *pair) {
+	free((void*)pair->key);
+	_destroy_val(pair->val);
+	free(pair);
+}
+
+void _destroy_list(List *list) {
+	Iter i;
+	iter_list(&i, list);
+	foreach (i) {
+		_destroy_val(i.val(&i));
+	}
+	destroy_iter_list(&i);
+	dtor_list(list);
+	free(list);
+}
+
+void _destroy_obj(Json *json) {
+	Iter i;
+	iter_hashtable(&i, &json->h);
+	foreach (i) {
+		_destroy_pair(get_ptr(i.val(&i)));
+	}
+	destroy_iter_hashtable(&i);
+	dtor_hashtable(&json->h);
+	free(json);
+}
+
+void destroy_json(Json *json) {
+	_destroy_obj(json);
 }
 
 static char *str_concat(char *dest, const char *src) {
@@ -256,28 +312,31 @@ static char *str_concat(char *dest, const char *src) {
 }
 
 char *_stringify_val(const Value v) {
+	char *str = malloc(1);
+	str[0] = '\0';
 	if (is_obj(v)) {
 		Obj *o = get_obj(v);
+		free(str);
 		if (o->type == LIST) return _stringify_list(o->ptr);
 		if (o->type == OBJ) return _stringify_obj(o->ptr);
 	} else if (is_int32(v)) {
-		char *str = malloc(255);
-		sprintf(str, "%d", v.as_int32);
-		return str;
+		char tmp[2000];
+		sprintf(tmp, "%d", v.as_int32);
+		return str_concat(str, tmp);
 	} else if (nil_val.bits == v.bits) {
-		return "null";
+		return str_concat(str, "null");
 	} else if (true_val.bits == v.bits) {
-		return "true";
+		return str_concat(str, "true");
 	} else if (false_val.bits == v.bits) {
-		return "false";
+		return str_concat(str, "false");
 	} else if (is_ptr(v)) {
-		char *str = malloc(strlen(get_ptr(v)) + 2);
-		sprintf(str, "\"%s\"", get_ptr(v));
-		return str;
+		char tmp[strlen(get_ptr(v)) + 3];
+		sprintf(tmp, "\"%s\"", get_ptr(v));
+		return str_concat(str, tmp);
 	}
-	char *str = malloc(255);
-	sprintf(str, "%f", v.as_double);
-	return str;
+	char tmp[2000];
+	sprintf(tmp, "%f", v.as_double);
+	return str_concat(str, tmp);
 }
 
 char *_stringify_pair(const Keyval *pair) {
@@ -285,7 +344,9 @@ char *_stringify_pair(const Keyval *pair) {
 	str[0] = '\0';
 	str = str_concat(str, pair->key);
 	str = str_concat(str, ":");
-	str = str_concat(str, _stringify_val(pair->val));
+	char *val = _stringify_val(pair->val);
+	str = str_concat(str, val);
+	free(val);
 	return str;
 }
 
@@ -295,10 +356,13 @@ char *_stringify_list(const List *l) {
 	Iter i;
 	iter_list(&i, l);
 	while (i.done(&i)) {
-		jstr = str_concat(jstr, _stringify_val(i.val(&i)));
+		char *val =_stringify_val(i.val(&i));
+		jstr = str_concat(jstr, val);
+		free(val);
 		i.next(&i);
 		if (i.done(&i)) strcat(jstr, ",");
 	}
+	destroy_iter_list(&i);
 	jstr = str_concat(jstr, "]");
 	return jstr;
 }
@@ -309,11 +373,14 @@ char *_stringify_obj(const Json *json) {
 	Iter i;
 	iter_hashtable(&i, &json->h);
 	while (i.done(&i)) {
-		jstr = str_concat(jstr, _stringify_pair(get_ptr(i.val(&i))));
+		char *pair = _stringify_pair(get_ptr(i.val(&i)));
+		jstr = str_concat(jstr, pair);
+		free(pair);
 		i.next(&i);
 		if (i.done(&i)) strcat(jstr, ",");
 	}
 	jstr = str_concat(jstr, "}");
+	destroy_iter_hashtable(&i);
 	return jstr;
 }
 

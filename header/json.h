@@ -42,6 +42,8 @@ typedef struct {
 
 const char *type_str(Token_Type t);
 Token *_create_token(Token_Type type, const char *lexeme, Value val, int line);
+void _destroy_token(Token *token);
+
 char *_substring(const char *src, int begin, int end);
 void print_token(Token *t);
 void _tokenize_json(List *list, const char *json_str);
@@ -50,6 +52,12 @@ Keyval *_parse_pair(List *tokens, int *cur);
 List *_parse_list(List *tokens, int *cur);
 Json *_parse_obj(List *tokens, int *cur);
 Json *parse_json(const char *json_str);
+
+void _destroy_val(Value val);
+void _destory_pair(Keyval *pair);
+void _destroy_list(List *list);
+void _destroy_obj(Json *json);
+void destroy_json(Json *json);
 
 char *_stringify_val(const Value v);
 char *_stringify_pair(const Keyval *pair);
