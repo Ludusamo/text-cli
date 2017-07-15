@@ -21,7 +21,7 @@ char *get_texts() {
 	char *s = 0;
 	if(curl) {
 		curl_easy_setopt(curl, CURLOPT_URL,
-		                 "https://script.google.com/macros/s/AKfycbzI4xNm7OuDXkB-O6srZvBB4C0pR3J2uDS3wVHuH15VCbOR-ZQ/exec?intent=all&sheet=received");
+		                 "https://script.google.com/macros/s/AKfycbzI4xNm7OuDXkB-O6srZvBB4C0pR3J2uDS3wVHuH15VCbOR-ZQ/exec?intent=retrieve&sheet=received");
 		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, aggregate_data_to_string);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &s);
@@ -39,17 +39,17 @@ char *get_texts() {
 int main() {
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 	char *s = get_texts();
-	//printf("%s\n", s);
-	free(s);
+	printf("%s\n", s);
 	curl_global_cleanup();
 
 	printf("Text CLI\n");
 	List l;
 	ctor_list(&l);
-	Json *json = parse_json("{\"test\": [\"hello\", 57], \"test2\": {\"a\":3.1}}");
+	Json *json = parse_json(s);
 	char *jstr = json_stringify(json);
 	printf("%s\n", jstr);
 	free(jstr);
+	free(s);
 	destroy_json(json);
 	return 0;
 }
