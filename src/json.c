@@ -33,6 +33,39 @@ char *_substring(const char *src, int begin, int end) {
 	return sub;
 }
 
+static char *str_concat(char *dest, const char *src) {
+	char *new = malloc(strlen(dest) + strlen(src) + 1);
+	new[0] = '\0';
+	strcpy(new, dest);
+	strcat(new, src);
+	free(dest);
+	return new;
+}
+
+char convert_escape_char(char c) {
+	switch (c) {
+	case 'n':
+		return '\n';
+	case '\'':
+	case '\\':
+	case '"':
+		return c;
+	}
+	return '?';
+}
+
+const char* escape_char_to_str(char c) {
+	switch (c) {
+	case '\n':
+		return "\\n";
+	case '\\':
+		return "\\";
+	case '"':
+		return "\"";
+	}
+	return 0;
+}
+
 void print_token(Token *t) {
 	printf("Token_Type: %s, Lexeme: %s, Line: %d, Value: ",
 	       type_str(t->type),
@@ -95,14 +128,26 @@ void _tokenize_json(List *list, const char *json_str) {
 			line++;
 			break;
 		case '"':
-			while (json_str[current] != '"' && current < in_len) {
+			while ((json_str[current] != '"' || json_str[current - 1] == '\\')
+			       && current < in_len) {
 				if (json_str[current] == '\n') line++;
 				current++;
 			}
 			current++;
+			char *value = _substring(json_str, start + 1, current - 1);
+			char *converted = malloc(strlen(value) + 1);
+			int converted_i = 0;
+			for (size_t i = 0; i < strlen(value); i++) {
+				if (value[i] == '\\') {
+					converted[converted_i++] = convert_escape_char(value[++i]);
+				} else {
+					converted[converted_i++] = value[i];
+				}
+			}
+			converted[converted_i] = '\0';
 			append_list(list, from_ptr(_create_token(kSTRING,
 				_substring(json_str, start, current),
-				from_ptr(_substring(json_str, start + 1, current - 1)),
+				from_ptr(converted),
 				line)));
 			break;
 		case ' ':
@@ -139,6 +184,7 @@ void _tokenize_json(List *list, const char *json_str) {
 				}
 				if (type == 0) {
 					throw_error("Invalid identifier", line);
+					printf("%s\n", sub);
 				} else {
 					append_list(list, from_ptr(
 						_create_token(type, sub, val, line)));
@@ -274,7 +320,6 @@ void _destroy_val(Value val) {
 void _destroy_pair(Keyval *pair) {
 	free((void*)pair->key);
 	_destroy_val(pair->val);
-	free(pair);
 }
 
 void _destroy_list(List *list) {
@@ -303,15 +348,6 @@ void destroy_json(Json *json) {
 	_destroy_obj(json);
 }
 
-static char *str_concat(char *dest, const char *src) {
-	char *new = malloc(strlen(dest) + strlen(src) + 1);
-	new[0] = '\0';
-	strcpy(new, dest);
-	strcat(new, src);
-	free(dest);
-	return new;
-}
-
 char *_stringify_val(const Value v) {
 	char *str = malloc(1);
 	str[0] = '\0';
@@ -331,8 +367,20 @@ char *_stringify_val(const Value v) {
 	} else if (false_val.bits == v.bits) {
 		return str_concat(str, "false");
 	} else if (is_ptr(v)) {
-		char tmp[strlen(get_ptr(v)) + 3];
-		sprintf(tmp, "\"%s\"", get_ptr(v));
+		size_t buffer_len = strlen(get_ptr(v)) * 2 + 3;
+		char tmp[buffer_len];
+		tmp[0] = '"';
+		int tmp_i = 1;
+		char *val = get_ptr(v);
+		for (size_t i = 0; i < strlen(val); i++) {
+			const char *escape_sequence = escape_char_to_str(val[i]);
+			if (escape_sequence) {
+				tmp[tmp_i++] = escape_sequence[0];
+				tmp[tmp_i++] = escape_sequence[1];
+			} else tmp[tmp_i++] = val[i];
+		}
+		tmp[tmp_i++] = '"';
+		tmp[tmp_i++] = '\0';
 		return str_concat(str, tmp);
 	}
 	char tmp[2000];
@@ -361,7 +409,7 @@ char *_stringify_list(const List *l) {
 		jstr = str_concat(jstr, val);
 		free(val);
 		i.next(&i);
-		if (i.done(&i)) strcat(jstr, ",");
+		if (i.done(&i)) jstr = str_concat(jstr, ",");
 	}
 	destroy_iter_list(&i);
 	jstr = str_concat(jstr, "]");
@@ -378,7 +426,7 @@ char *_stringify_obj(const Json *json) {
 		jstr = str_concat(jstr, pair);
 		free(pair);
 		i.next(&i);
-		if (i.done(&i)) strcat(jstr, ",");
+		if (i.done(&i)) jstr = str_concat(jstr, ",");
 	}
 	jstr = str_concat(jstr, "}");
 	destroy_iter_hashtable(&i);
