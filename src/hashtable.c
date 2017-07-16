@@ -47,7 +47,7 @@ Keyval *_aux_set_hashtable(Hashtable *h, Keyval *new_pair,
                            List *list, uint64_t hash) {
 	Keyval *pair = get_ptr(access_list(list, hash));
 	if (pair) {
-		if (pair->key == new_pair->key) {
+		if (strcmp(pair->key, new_pair->key) == 0) {
 			h->size--;
 			pair->val = new_pair->val;
 			free(new_pair);
@@ -61,10 +61,11 @@ Keyval *_aux_set_hashtable(Hashtable *h, Keyval *new_pair,
 Value access_hashtable(const Hashtable *h, const char *key) {
 	uint64_t h1 = hash1(key) % h->a.length;
 	Keyval *pair = get_ptr(access_list(&h->a, h1));
-	if (pair && pair->key == key) return pair->val;
+	if (pair && strcmp(pair->key, key) == 0) return pair->val;
 	uint64_t h2 = hash2(key) % h->b.length;
 	pair = get_ptr(access_list(&h->b, h2));
-	if (pair && pair->key == key) return pair->val;
+	if (pair && strcmp(pair->key, key) == 0) return pair->val;
+	printf("I couldn't find it\n");
 	return nil_val;
 }
 
@@ -97,14 +98,14 @@ int delete_hashtable(Hashtable *h, const char *key) {
 	h->size--;
 	uint64_t h1 = hash1(key) % h->a.length;
 	Keyval *pair = get_ptr(access_list(&h->a, h1));
-	if (pair->key == key) {
+	if (strcmp(pair->key, key) == 0) {
 		set_list(&h->a, h1, nil_val);
 		free(pair);
 		return 1;
 	}
 	uint64_t h2 = hash2(key) % h->b.length;
 	pair = get_ptr(access_list(&h->b, h2));
-	if (pair->key == key) {
+	if (strcmp(pair->key, key) == 0) {
 		set_list(&h->b, h2, nil_val);
 		free(pair);
 		return 1;
