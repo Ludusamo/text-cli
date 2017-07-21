@@ -59,13 +59,13 @@ Keyval *_aux_set_hashtable(Hashtable *h, Keyval *new_pair,
 }
 
 Value access_hashtable(const Hashtable *h, const char *key) {
+	if (h->a.length == 0) return nil_val;
 	uint64_t h1 = hash1(key) % h->a.length;
 	Keyval *pair = get_ptr(access_list(&h->a, h1));
 	if (pair && strcmp(pair->key, key) == 0) return pair->val;
 	uint64_t h2 = hash2(key) % h->b.length;
 	pair = get_ptr(access_list(&h->b, h2));
 	if (pair && strcmp(pair->key, key) == 0) return pair->val;
-	printf("I couldn't find it\n");
 	return nil_val;
 }
 
