@@ -149,7 +149,6 @@ void _tokenize_json(List *list, const char *json_str) {
 				_substring(json_str, start, current),
 				from_ptr(converted),
 				line)));
-			free(value);
 			break;
 		case ' ':
 		case '\r':
@@ -185,6 +184,7 @@ void _tokenize_json(List *list, const char *json_str) {
 				}
 				if (type == 0) {
 					throw_error("Invalid identifier", line);
+					printf("%s\n", sub);
 				} else {
 					append_list(list, from_ptr(
 						_create_token(type, sub, val, line)));
