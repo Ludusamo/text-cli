@@ -149,6 +149,7 @@ void _tokenize_json(List *list, const char *json_str) {
 				_substring(json_str, start, current),
 				from_ptr(converted),
 				line)));
+			free(value);
 			break;
 		case ' ':
 		case '\r':
@@ -184,7 +185,6 @@ void _tokenize_json(List *list, const char *json_str) {
 				}
 				if (type == 0) {
 					throw_error("Invalid identifier", line);
-					printf("%s\n", sub);
 				} else {
 					append_list(list, from_ptr(
 						_create_token(type, sub, val, line)));
@@ -223,12 +223,12 @@ Value _parse_val(List *tokens, int *cur) {
 	switch(tok->type) {
 	case kLCURLY: {
 		Obj *obj = malloc(sizeof(Obj));
-		*obj = (Obj) { OBJ, _parse_obj(tokens, cur) };
+		*obj = (Obj) { jOBJ, _parse_obj(tokens, cur) };
 		return from_obj(obj);
 	}
 	case kLBRACK: {
 		Obj *obj = malloc(sizeof(Obj));
-		*obj = (Obj) { LIST, _parse_list(tokens, cur) };
+		*obj = (Obj) { jLIST, _parse_list(tokens, cur) };
 		return from_obj(obj);
 	}
 	case kSTRING:
@@ -309,8 +309,8 @@ Json *parse_json(const char *json_str) {
 void _destroy_val(Value val) {
 	if (is_obj(val)) {
 		Obj *o = get_obj(val);
-		if (o->type == LIST) _destroy_list(o->ptr);
-		else if (o->type == OBJ) _destroy_obj(o->ptr);
+		if (o->type == jLIST) _destroy_list(o->ptr);
+		else if (o->type == jOBJ) _destroy_obj(o->ptr);
 		free(o);
 	} else if (is_ptr(val)) {
 		free(get_ptr(val));
@@ -354,8 +354,8 @@ char *_stringify_val(const Value v) {
 	if (is_obj(v)) {
 		Obj *o = get_obj(v);
 		free(str);
-		if (o->type == LIST) return _stringify_list(o->ptr);
-		if (o->type == OBJ) return _stringify_obj(o->ptr);
+		if (o->type == jLIST) return _stringify_list(o->ptr);
+		if (o->type == jOBJ) return _stringify_obj(o->ptr);
 	} else if (is_int32(v)) {
 		char tmp[2000];
 		sprintf(tmp, "%d", v.as_int32);
@@ -435,4 +435,36 @@ char *_stringify_obj(const Json *json) {
 
 char *json_stringify(const Json *json) {
 	return _stringify_obj(json);
+}
+
+int is_type_json(const Json *json, const char *name, Json_Type type) {
+	Value v = access_hashtable(&json->h, name);
+	if (type == jLIST && is_obj(v)) return get_obj(v)->type == jLIST;
+	else if (type == jOBJ && is_obj(v)) return get_obj(v)->type == jOBJ;
+	else if (type == jSTRING) return is_ptr(v);
+	else if (type == jNUM) return is_int32(v) || is_double(v);
+	else if (type == jBOOL) return v.bits == true_val.bits ||
+	                               v.bits == false_val.bits;
+	else if (type == jNULL) return v.bits == nil_val.bits;
+	return 0;
+}
+
+Json *retrieve_obj_json(const Json *json, const char *name) {
+	return ((Obj*) get_obj(access_hashtable(&json->h, name)))->ptr;
+}
+
+List *retrieve_list_json(const Json *json, const char *name) {
+	return ((Obj*) get_obj(access_hashtable(&json->h, name)))->ptr;
+}
+
+const char *retrieve_str_json(const Json *json, const char *name) {
+	return get_ptr(access_hashtable(&json->h, name));
+}
+
+double retrieve_num_json(const Json *json, const char *name) {
+	return access_hashtable(&json->h, name).as_double;
+}
+
+int retrieve_bool_json(const Json *json, const char *name) {
+	return access_hashtable(&json->h, name).bits == true_val.bits;
 }

@@ -5,8 +5,12 @@
 #include "list.h"
 
 typedef enum {
-	LIST,
-	OBJ
+	jLIST,
+	jOBJ,
+	jSTRING,
+	jNUM,
+	jBOOL,
+	jNULL
 } Json_Type;
 
 typedef struct {
@@ -54,7 +58,7 @@ Json *_parse_obj(List *tokens, int *cur);
 Json *parse_json(const char *json_str);
 
 void _destroy_val(Value val);
-void _destory_pair(Keyval *pair);
+void _destroy_pair(Keyval *pair);
 void _destroy_list(List *list);
 void _destroy_obj(Json *json);
 void destroy_json(Json *json);
@@ -64,5 +68,12 @@ char *_stringify_pair(const Keyval *pair);
 char *_stringify_list(const List *l);
 char *_stringify_obj(const Json *json);
 char *json_stringify(const Json *json);
+
+int is_type_json(const Json *json, const char *name, Json_Type type);
+Json *retrieve_obj_json(const Json *json, const char *name);
+List *retrieve_list_json(const Json *json, const char *name);
+const char *retrieve_str_json(const Json *json, const char *name);
+double retrieve_num_json(const Json *json, const char *name);
+int retrieve_bool_json(const Json *json, const char *name);
 
 #endif // JSON_H
