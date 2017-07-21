@@ -12,7 +12,6 @@ typedef struct {
 	int num_convo;
 } Convo_Select;
 
-void select_convo(char *name);
 void init_convo_select(Convo_Select *cs);
 void deinit_convo_select(Convo_Select *cs);
 void render_convo_select(const Convo_Select *cs);
