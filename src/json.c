@@ -149,6 +149,7 @@ void _tokenize_json(List *list, const char *json_str) {
 				_substring(json_str, start, current),
 				from_ptr(converted),
 				line)));
+			free(value);
 			break;
 		case ' ':
 		case '\r':
