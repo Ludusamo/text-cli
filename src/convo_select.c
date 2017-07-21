@@ -2,6 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+void select_convo(char *name) {
+	move(0, 30);
+	clrtoeol();
+	mvprintw(0, 30, "Item selected is : %s", name);
+}
+
 void init_convo_select(Convo_Select *cs) {
 	cs->num_convo = 1;
 	cs->items = calloc(1, sizeof(ITEM *));
@@ -50,6 +56,17 @@ void update_convo_select(Convo_Select *cs) {
 			case 'k':
 				menu_driver(cs->menu, REQ_UP_ITEM);
 				break;
+			case 10:	/* Enter */
+			{
+				ITEM *cur;
+				void (*p)(char *);
+
+				cur = current_item(cs->menu);
+				p = item_userptr(cur);
+				p((char *)item_name(cur));
+				pos_menu_cursor(cs->menu);
+				break;
+			}
 		}
 		render_convo_select(cs);
 	}
@@ -59,9 +76,10 @@ void add_convo(Convo_Select *cs, const char *contact, const char *num_msg) {
 	unpost_menu(cs->menu);
 	cs->items = realloc(cs->items, ++cs->num_convo);
 	cs->items[cs->num_convo - 2] = new_item(contact, num_msg);
+	set_item_userptr(cs->items[cs->num_convo - 2], select_convo);
 	cs->items[cs->num_convo - 1] = 0;
 	set_menu_items(cs->menu, cs->items);
-	int width_row = strlen(contact) + strlen(num_msg) + 10;
+	int width_row = strlen(contact) + strlen(num_msg) + 4;
 	if (cs->width < width_row) cs->width = width_row;
 	wresize(cs->subwin, cs->height, cs->width - 2);
 	wresize(cs->win, LINES - 2, cs->width);
@@ -69,7 +87,7 @@ void add_convo(Convo_Select *cs, const char *contact, const char *num_msg) {
 }
 
 void print_in_middle(WINDOW *win, int starty, int startx,
-                     int width, char *string, chtype color) {
+		int width, char *string, chtype color) {
 	int length, x, y;
 	float temp;
 
